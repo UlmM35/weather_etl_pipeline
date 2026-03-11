@@ -21,7 +21,9 @@ def transform_weather(raw_weather):
     df = pd.DataFrame(raw_weather)
     
     before = len(df)
+    
     df = df.dropna(subset=["temp_max", "temp_min", "precipitation", "windspeed_max"], how="all")
+    
     after = len(df)
     
     print(f"Dropped {before - after} weather records with missing values")
