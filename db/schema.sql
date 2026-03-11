@@ -6,8 +6,7 @@ CREATE TABLE IF NOT EXISTS raw.countries (
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
     population BIGINT,
-    area DOUBLE PRECISION,
-    fetched_at TIMESTAMP DEFAULT NOW()
+    area DOUBLE PRECISION
 );
 
 -- Schema for raw weather data
@@ -19,8 +18,7 @@ CREATE TABLE IF NOT EXISTS raw.weather (
     temp_min DOUBLE PRECISION,
     precipitation DOUBLE PRECISION,
     windspeed_max DOUBLE PRECISION,
-    sunshine_duration DOUBLE PRECISION,
-    fetched_at TIMESTAMP DEFAULT NOW()
+    sunshine_duration DOUBLE PRECISION
 );
 
 -- Schema for clean country data
