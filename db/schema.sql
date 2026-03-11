@@ -1,7 +1,7 @@
 -- Schema for raw country data
 CREATE TABLE IF NOT EXISTS raw.countries (
     id SERIAL PRIMARY KEY,
-    name TEXT,
+    country_name TEXT,
     capital TEXT,
     latitude DOUBLE PRECISION,
     longitude DOUBLE PRECISION,
@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS raw.weather (
 -- Schema for clean country data
 CREATE TABLE IF NOT EXISTS clean.countries (
     id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
+    country_name TEXT NOT NULL,
     capital TEXT NOT NULL,
     latitude DOUBLE PRECISION NOT NULL,
     longitude DOUBLE PRECISION NOT NULL,
@@ -39,9 +39,9 @@ CREATE TABLE IF NOT EXISTS clean.weather (
     id SERIAL PRIMARY KEY,
     country_id INTEGER REFERENCES clean.countries(id),
     date DATE NOT NULL,
-    temp_max DOUBLE PRECISION,
-    temp_min DOUBLE PRECISION,
-    precipitation DOUBLE PRECISION,
+    temp_max DOUBLE PRECISION NOT NULL,
+    temp_min DOUBLE PRECISION NOT NULL,
+    precipitation DOUBLE PRECISION NOT NULL,
     windspeed_max DOUBLE PRECISION,
-    sunshine_duration DOUBLE PRECISION
+    sunshine_duration DOUBLE PRECISION NOT NULL
 );
