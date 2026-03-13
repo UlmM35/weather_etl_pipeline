@@ -2,8 +2,6 @@
 -- PostgreSQL database dump
 --
 
-\restrict VNFwFhXUc8OEnzNi2nhiyY3ZzUfXW8b88Miyvox57YYtTmsj11PMaGKMTVmoaeJ
-
 -- Dumped from database version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 -- Dumped by pg_dump version 16.13 (Ubuntu 16.13-0ubuntu0.24.04.1)
 
@@ -322,6 +320,3 @@ ALTER TABLE ONLY clean.weather
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict VNFwFhXUc8OEnzNi2nhiyY3ZzUfXW8b88Miyvox57YYtTmsj11PMaGKMTVmoaeJ
-
