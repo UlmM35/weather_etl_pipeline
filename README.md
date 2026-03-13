@@ -25,6 +25,13 @@ The database uses two schemas:
 - `raw` — stores data exactly as it comes from the APIs
 - `clean` — stores transformed and clean data
 
+## Features
+
+- Fetches all European countries and their capital coordinates from the RestCountries API
+- Collects 30 days of historical weather data per capital from the Open-Meteo Archive API
+- Includes three analytical SQL views: Capitals ranked by average
+temperature, countries with the most rainfall and a full 30-day summary per country.
+
 ## Database Dump
 
 Located in `dump.sql`.
