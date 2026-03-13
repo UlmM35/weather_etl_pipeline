@@ -27,4 +27,4 @@ The database uses two schemas:
 
 ## Database Dump
 
-Located in `db/dump.sql`.
+Located in `dump.sql`.
