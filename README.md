@@ -2,6 +2,12 @@
 
 Python ETL Pipeline that collects 30 days of weather data for European capitals and stores it in a PostgreSQL database.
 
+## Tech Stack
+
+- Python
+- PostgreSQL
+- Pandas
+
 ## Setup
 
 1. Clone the repo and install dependencies:
