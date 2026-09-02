@@ -1,27 +1,33 @@
+from contextlib import closing
+
 from utils.load import get_connection
-from dotenv import load_dotenv
-    
-def views():
-    conn = get_connection()
-    cur = conn.cursor()
-       
-    # top 5 capitals by avg temp
-    cur.execute("SELECT * FROM clean.v_capitals_by_avg_temp LIMIT 5\n")
+
+
+def print_analytical_views():
+    """Print example results from the analytical SQL views."""
+    with closing(get_connection()) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM clean.v_capitals_by_avg_temp LIMIT 5")
+            warmest_capitals = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM clean.v_countries_by_rainfall LIMIT 5")
+            rainiest_countries = cursor.fetchall()
+
+            cursor.execute("SELECT * FROM clean.v_country_summary")
+            country_summaries = cursor.fetchall()
+
     print("Top 5 capitals by average temperature:")
-    for row in cur.fetchall():
-        print(f"  {row[0]}, {row[1]}: {row[2]}°C")
-    print("")
-    
-    # top 5 capitals by precipitation
-    cur.execute("SELECT * FROM clean.v_countries_by_rainfall LIMIT 5\n")
-    print("Top 5 countries by rainfall:")
-    for row in cur.fetchall():
-        print(f"  {row[0]}, {row[1]}: {row[2]}mm")
-    print("")
-    
-    # summary for all countries
-    cur.execute("SELECT * FROM clean.v_country_summary\n")
-    print("Full summaries for all countries:")
-    for row in cur.fetchall():
-        print(f"  {row[0]}, {row[1]}, MAX: {row[2]}°C, MIN: {row[3]}°C, {row[4]}mm, {row[5]}km/h, {row[6]}h, {row[7]} days")
-        
+    for capital, country, average_temperature in warmest_capitals:
+        print(f"  {capital}, {country}: {average_temperature} degrees Celsius")
+
+    print("\nTop 5 countries by rainfall:")
+    for country, capital, total_precipitation in rainiest_countries:
+        print(f"  {country}, {capital}: {total_precipitation} mm")
+
+    print("\nFull summaries for all countries:")
+    for row in country_summaries:
+        print(
+            f"  {row[0]}, {row[1]}, avg max: {row[2]} degrees Celsius, "
+            f"avg min: {row[3]} degrees Celsius, rainfall: {row[4]} mm, "
+            f"wind: {row[5]} km/h, sunshine: {row[6]} h, days: {row[7]}"
+        )

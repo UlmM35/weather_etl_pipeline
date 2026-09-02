@@ -27,9 +27,9 @@ SELECT
     c.capital,
     ROUND(AVG(w.temp_max)::numeric, 2) AS avg_temp_max,
     ROUND(AVG(w.temp_min)::numeric, 2) AS avg_temp_min,
-    ROUND(AVG(w.precipitation)::numeric, 2) AS total_precipitation,
+    ROUND(SUM(w.precipitation)::numeric, 2) AS total_precipitation,
     ROUND(AVG(w.windspeed_max)::numeric, 2) AS avg_windspeed,
-    ROUND(AVG(w.sunshine_duration)::numeric, 2) AS avg_sunshine_hours,
+    ROUND(AVG(w.sunshine_hours)::numeric, 2) AS avg_sunshine_hours,
     COUNT(w.date) AS days_recorded
 FROM clean.weather w
 INNER JOIN clean.countries c ON w.country_id = c.id

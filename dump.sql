@@ -83,13 +83,13 @@ ALTER SEQUENCE clean.countries_id_seq OWNED BY clean.countries.id;
 
 CREATE TABLE clean.weather (
     id integer NOT NULL,
-    country_id integer,
+    country_id integer NOT NULL,
     date date NOT NULL,
     temp_max double precision NOT NULL,
     temp_min double precision NOT NULL,
     precipitation double precision NOT NULL,
     windspeed_max double precision,
-    sunshine_duration double precision NOT NULL
+    sunshine_hours double precision NOT NULL
 );
 
 
@@ -118,7 +118,7 @@ ALTER VIEW clean.v_capitals_by_avg_temp OWNER TO postgres;
 CREATE VIEW clean.v_countries_by_rainfall AS
  SELECT c.country_name AS country,
     c.capital,
-    round((sum(w.precipitation))::numeric, 2) AS total_precipitation_mm
+    round((sum(w.precipitation))::numeric, 2) AS total_precipitation
    FROM (clean.weather w
      JOIN clean.countries c ON ((w.country_id = c.id)))
   GROUP BY c.country_name, c.capital
@@ -136,9 +136,9 @@ CREATE VIEW clean.v_country_summary AS
     c.capital,
     round((avg(w.temp_max))::numeric, 2) AS avg_temp_max,
     round((avg(w.temp_min))::numeric, 2) AS avg_temp_min,
-    round((avg(w.precipitation))::numeric, 2) AS total_precipitation_mm,
+    round((sum(w.precipitation))::numeric, 2) AS total_precipitation,
     round((avg(w.windspeed_max))::numeric, 2) AS avg_windspeed,
-    round((avg(w.sunshine_duration))::numeric, 2) AS avg_sunshine_hours,
+    round((avg(w.sunshine_hours))::numeric, 2) AS avg_sunshine_hours,
     count(w.date) AS days_recorded
    FROM (clean.weather w
      JOIN clean.countries c ON ((w.country_id = c.id)))

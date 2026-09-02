@@ -1,133 +1,157 @@
-import psycopg2
 import os
+from contextlib import closing
+
+import psycopg2
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
-# creates and returns a db connection
+
 def get_connection():
+    """Create a PostgreSQL connection from environment variables."""
     return psycopg2.connect(
         host=os.getenv("DB_HOST"),
         port=os.getenv("DB_PORT"),
         dbname=os.getenv("DB_NAME"),
         user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
+        password=os.getenv("DB_PASSWORD"),
     )
 
-# inserts raw country data into raw.countries
-def load_raw_countries(countries):
-    connection = get_connection()
-    current = connection.cursor()
 
-    for country in countries:
-        current.execute("""
-            INSERT INTO raw.countries (country_name, capital, latitude, longitude, population, area)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (
+def load_raw_countries(countries):
+    """Insert country API data into raw.countries."""
+    rows = [
+        (
             country["name"],
             country["capital"],
             country["latitude"],
             country["longitude"],
             country["population"],
-            country["area"]
-        ))
+            country["area"],
+        )
+        for country in countries
+    ]
 
-    connection.commit()
-    current.close()
-    connection.close()
+    with closing(get_connection()) as connection:
+        with connection, connection.cursor() as cursor:
+            cursor.executemany(
+                """
+                INSERT INTO raw.countries
+                    (country_name, capital, latitude, longitude, population, area)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                """,
+                rows,
+            )
 
-# inserts raw weather data into raw.weather
+
 def load_raw_weather(weather_records):
-    conn = get_connection()
-    cur = conn.cursor()
-
-    for record in weather_records:
-        cur.execute("""
-            INSERT INTO raw.weather (capital, date, temp_max, temp_min, precipitation, windspeed_max, sunshine_duration)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (
+    """Insert weather API data into raw.weather."""
+    rows = [
+        (
             record["capital"],
             record["date"],
             record["temp_max"],
             record["temp_min"],
             record["precipitation"],
             record["windspeed_max"],
-            record["sunshine_duration"]
-        ))
+            record["sunshine_duration"],
+        )
+        for record in weather_records
+    ]
 
-    conn.commit()
-    cur.close()
-    conn.close()
+    with closing(get_connection()) as connection:
+        with connection, connection.cursor() as cursor:
+            cursor.executemany(
+                """
+                INSERT INTO raw.weather
+                    (capital, date, temp_max, temp_min, precipitation,
+                     windspeed_max, sunshine_duration)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """,
+                rows,
+            )
 
-# inserts cleaned country data and returns a capital to id mapping (required for foreign key)
+
 def load_clean_countries(countries):
-    conn = get_connection()
-    cur = conn.cursor()
-
+    """Insert validated countries and return a capital-to-ID mapping."""
     capital_to_id = {}
 
-    for country in countries:
-        cur.execute("""
-            INSERT INTO clean.countries (country_name, capital, latitude, longitude, population, area)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id
-        """, (
-            country["name"],
-            country["capital"],
-            country["latitude"],
-            country["longitude"],
-            country["population"],
-            country["area"]
-        ))
-        country_id = cur.fetchone()[0]
-        capital_to_id[country["capital"]] = country_id
+    with closing(get_connection()) as connection:
+        with connection, connection.cursor() as cursor:
+            for country in countries:
+                cursor.execute(
+                    """
+                    INSERT INTO clean.countries
+                        (country_name, capital, latitude, longitude, population, area)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    (
+                        country["name"],
+                        country["capital"],
+                        country["latitude"],
+                        country["longitude"],
+                        country["population"],
+                        country["area"],
+                    ),
+                )
+                capital_to_id[country["capital"]] = cursor.fetchone()[0]
 
-    conn.commit()
-    cur.close()
-    conn.close()
     return capital_to_id
 
-# inserts cleeaned weather data using the id mapping
-def load_clean_weather(weather_records, capital_to_id):
-    conn = get_connection()
-    cur = conn.cursor()
 
+def load_clean_weather(weather_records, capital_to_id):
+    """Insert transformed weather data using country foreign keys."""
+    rows = []
     skipped = 0
-    loaded = 0
 
     for record in weather_records:
         country_id = capital_to_id.get(record["capital"])
-        if not country_id:
+        if country_id is None:
             skipped += 1
             continue
 
-        cur.execute("""
-            INSERT INTO clean.weather (country_id, date, temp_max, temp_min, precipitation, windspeed_max, sunshine_duration)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (
-            country_id,
-            record["date"],
-            record["temp_max"],
-            record["temp_min"],
-            record["precipitation"],
-            record["windspeed_max"],
-            record["sunshine_hours"]
-        ))
-        loaded += 1
+        rows.append(
+            (
+                country_id,
+                record["date"],
+                record["temp_max"],
+                record["temp_min"],
+                record["precipitation"],
+                record["windspeed_max"],
+                record["sunshine_hours"],
+            )
+        )
 
-    conn.commit()
-    cur.close()
-    conn.close()
-    
-# truncate all tables before loading in new data, uses truncate because it's faster   
+    with closing(get_connection()) as connection:
+        with connection, connection.cursor() as cursor:
+            cursor.executemany(
+                """
+                INSERT INTO clean.weather
+                    (country_id, date, temp_max, temp_min, precipitation,
+                     windspeed_max, sunshine_hours)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """,
+                rows,
+            )
+
+    print(f"Loaded {len(rows)} clean weather records; skipped {skipped}")
+
+
 def clear_tables():
-    conn = get_connection()
-    cur = conn.cursor()
+    """Remove previous pipeline results and reset generated IDs."""
+    with closing(get_connection()) as connection:
+        with connection, connection.cursor() as cursor:
+            cursor.execute(
+                """
+                TRUNCATE TABLE
+                    clean.weather,
+                    clean.countries,
+                    raw.weather,
+                    raw.countries
+                RESTART IDENTITY CASCADE
+                """
+            )
 
-    # truncates and sets id-s back to 1
-    cur.execute("TRUNCATE TABLE clean.weather, clean.countries, raw.weather, raw.countries RESTART IDENTITY CASCADE")
-    
-    conn.commit()
-    cur.close()
-    conn.close()
     print("Tables cleared")
