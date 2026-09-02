@@ -78,6 +78,7 @@ Install:
 - Python 3.11 or newer
 - PostgreSQL
 - Git
+- A free [REST Countries API key](https://restcountries.com/sign-up)
 
 Check that the commands are available:
 
@@ -169,6 +170,8 @@ cp .env.example .env
 Open `.env` and replace the example password:
 
 ```dotenv
+REST_COUNTRIES_API_KEY=your_rest_countries_api_key
+
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=weather_etl
@@ -177,6 +180,10 @@ DB_PASSWORD=your_postgresql_password
 ```
 
 The `.env` file is ignored by Git and must not be committed.
+
+REST Countries v5 requires an API key. Create an account, copy a key from the
+REST Countries dashboard and place it in `REST_COUNTRIES_API_KEY`. The key is
+sent in the `Authorization` request header and is never written to PostgreSQL.
 
 ## Run the pipeline
 
@@ -247,6 +254,12 @@ Check `DB_USER` and `DB_PASSWORD` in `.env`. On Linux, use the peer-authenticati
 database creation command shown above, then configure a password for the user
 used by the application.
 
+### REST Countries authentication fails
+
+Check that `REST_COUNTRIES_API_KEY` exists in `.env` and contains an active API
+key. The pipeline reports the API status code and error message without printing
+the key.
+
 ### Relation or schema does not exist
 
 Run `db/schema.sql` and `db/views.sql` against the same database configured in
@@ -254,5 +267,5 @@ Run `db/schema.sql` and `db/views.sql` against the same database configured in
 
 ## Data sources
 
-- [REST Countries API](https://restcountries.com/)
+- [REST Countries v5 API](https://restcountries.com/docs/countries)
 - [Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api)
